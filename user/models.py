@@ -41,8 +41,22 @@ class User(models.Model):
     @property
     # 建立与profile的一对一关系
     def profile(self):
-        _profile = Profile.objects.get_or_create(id=self.id)  # 获取或者创建，先获取后创建，如果获取不到就创建一下，所以都要添加一下默认值
-        return _profile
+        '''当前用户对应的Profile'''
+        if not hasattr(self, '_profile'):  # 判断用户的交友资料里面是否有对应的id
+            self._profile, _ = Profile.objects.get_or_create(id=self.id)
+        # get_or_create获取或者创建，先获取后创建，如果获取不到就创建一下，所以都要添加一下默认值
+        # get_or_create 有两个返回值
+        # 单独的下划线可以占位，可以接受到后面的返回值
+        return self._profile
+
+    '''
+        Python中的属性操作
+            setattr(obj,name,value) 修改属性值
+            getattr(obj,name)       获取属性值
+            delattr(obj,name)       删除属性值
+            hasattr(obj,name)       判断有没有该属性值
+    '''
+
 
 class Profile(models.Model):
     '''用户的交友资料'''
