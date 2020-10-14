@@ -21,10 +21,10 @@ class User(models.Model):
     )
     phonenum = models.CharField(verbose_name='手机号', max_length=16, unique=True)
     nickname = models.CharField(verbose_name='昵称', max_length=25, db_index=True)
-    gender = models.CharField(verbose_name='性别', max_length=25, choices=GENDERS)
+    gender = models.CharField(verbose_name='性别', max_length=25, choices=GENDERS, default='male')
     birthday = models.DateField(verbose_name='出生日', default='2002-01-01')
     avatar = models.CharField(verbose_name='个人形象', max_length=255)
-    location = models.CharField(verbose_name='常居地', max_length=25, choices=LOCATIONS)
+    location = models.CharField(verbose_name='常居地', max_length=25, choices=LOCATIONS, default='上海')
 
     def to_dict(self):
         # 很low，很多地方用到会封装一下
@@ -38,11 +38,16 @@ class User(models.Model):
             'location': self.location,
         }
 
+    @property
+    # 建立与profile的一对一关系
+    def profile(self):
+        _profile = Profile.objects.get_or_create(id=self.id)  # 获取或者创建，先获取后创建，如果获取不到就创建一下，所以都要添加一下默认值
+        return _profile
 
 class Profile(models.Model):
     '''用户的交友资料'''
-    dating_location = models.CharField(verbose_name='目标城市', max_length=25, choices=User.LOCATIONS)
-    dating_gender = models.CharField(verbose_name='匹配性别', max_length=25, choices=User.GENDERS)
+    dating_location = models.CharField(verbose_name='目标城市', max_length=25, choices=User.LOCATIONS, default='上海')
+    dating_gender = models.CharField(verbose_name='匹配性别', max_length=25, choices=User.GENDERS, default='female')
 
     min_distance = models.IntegerField(verbose_name='最小查找范围', default=1)
     max_distance = models.IntegerField(verbose_name='最大查找范围', default=50)
