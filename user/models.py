@@ -25,3 +25,15 @@ class User(models.Model):
     birthday = models.DateField(verbose_name='出生日', default='2002-01-01')
     avatar = models.CharField(verbose_name='个人形象', max_length=255)
     location = models.CharField(verbose_name='常居地', max_length=25, choices=LOCATIONS)
+
+    def to_dict(self):
+        # 很low，很多地方用到会封装一下
+        return {
+            'id': self.id,
+            'phonenum': self.phonenum,
+            'nickname': self.nickname,
+            'gender': self.gender,
+            'birthday': str(self.birthday),  # DateField需要转义
+            'avatar': self.avatar,
+            'location': self.location,
+        }
