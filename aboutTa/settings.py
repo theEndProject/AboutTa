@@ -38,8 +38,98 @@ INSTALLED_APPS = [
 
     'user',
 ]
+'''
+    django 中间件: ----->  函数一定要带动词
+        process_request 处理请求
+        process_view
+        process_template
+        process_response
+        process_exception 处理错误
+'''
+'''
+    完整的URL = ’http://example.com/foo/bar?aa=123&bb=456#top‘
+    
+    HTTP协议是建立在TCP基础之上的短链接协议
+    
+    WSGI：Web Server Gateway Interface ---> Web服务器的网关接口
 
+    从点击一个URL开始，到最终页面显示，中间经历的全部过程
+        1.域名解析：example.com ---> 11.22.33.44
+        2.浏览器封装“请求报文”
+        3.浏览器与服务器建立TCP连接
+            三次握手
+            1.client -> SYN -> server
+            2.client <- ACK + SYN <- server
+            3.client -> ACK -> server
+        4.浏览器向服务器发送“请求报文”
+        5.HTTP Server 接收 '请求报文' (HTTP Server主要是管理网络的)
+        6.WSGI将“请求报文”解析成 HTTPRequest 对象 (WSGI用于转化的)
+        7.路由管理模块进行 URL 匹配，得到对应的 View 函数
+        8.执行 View函数
+            1.提取参数
+            2.进行逻辑处理
+            3.进行数据处理
+            4.进行模板渲染（前后端分离就不需要了）
+            5.将处理结果封装成 HTTPResponse 对象
+        9.WSGI将 HTTPResponse 对象封装成 “响应报文”
+        10.HTTP Server 将“响应报文” 发送给浏览器
+        11.服务器断开与浏览器的TCP连接
+            四次挥手：
+            1.server -> FIN -> client
+            2.server <- ACK <- client
+                数据传输等待中...
+                数据传输多少服务器端不知道多少，只有客户端知道，当客户端通知服务器端传输完成，才会传FIN
+            3.server <- FIN <- client
+            4.server -> ACK -> client
+        12.浏览器接受“响应报文”
+        13.浏览器解析“响应报文”，并渲染成页面
+        
+'''
+'''
+    *中间件的作用就是在这些步骤中进行一些的操作
+    
+    从点击一个URL开始，到最终页面显示，中间经历的全部过程
+        1.域名解析：example.com ---> 11.22.33.44
+        2.浏览器封装“请求报文”
+        3.浏览器与服务器建立TCP连接
+            三次握手
+            1.client -> SYN -> server
+            2.client <- ACK + SYN <- server
+            3.client -> ACK -> server
+        4.浏览器向服务器发送“请求报文”
+        5.HTTP Server 接收 '请求报文' (HTTP Server主要是管理网络的)
+        6.WSGI将“请求报文”解析成 HTTPRequest 对象 (WSGI用于转化的)
+        ----------------------------------------> process_request
+        7.路由管理模块进行 URL 匹配，得到对应的 View 函数
+        ----------------------------------------> process_view
+        8.执行 View函数
+            | - 1.提取参数
+            | - 2.进行逻辑处理
+            | - 3.进行数据处理
+            | - 4.进行模板渲染（前后端分离就不需要了）
+            | - ----------------------------------------> process_template
+            | - 5.将处理结果封装成 HTTPResponse 对象
+            + ----------------------------------------> process_exception
+        ----------------------------------------> process_response
+        9.WSGI将 HTTPResponse 对象封装成 “响应报文”
+        10.HTTP Server 将“响应报文” 发送给浏览器
+        11.服务器断开与浏览器的TCP连接
+            四次挥手：
+            1.server -> FIN -> client
+            2.server <- ACK <- client
+                数据传输等待中...
+                数据传输多少服务器端不知道多少，只有客户端知道，当客户端通知服务器端传输完成，才会传FIN
+            3.server <- FIN <- client
+            4.server -> ACK -> client
+        12.浏览器接受“响应报文”
+        13.浏览器解析“响应报文”，并渲染成页面
+'''
 MIDDLEWARE = [
+    # 中间件是有顺序的，自上而下
+    # 先调用第一层的process_request,依次第二层第三层
+    # 再调用第一层process_view，依次第二层第三层
+    # 以此类推，循环调用
+    # 退出是从下往上，循环调用
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
