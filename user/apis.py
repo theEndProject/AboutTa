@@ -1,13 +1,17 @@
 from django.http import JsonResponse
 
+from user.logics import send_vcode
+
 
 # Create your views here.
 
 def fetch_vcode(request):
     '''给用户发送验证码'''
     phonenum = request.Get.get('phonenum')
-
-    return JsonResponse()
+    if send_vcode(phonenum):
+        return JsonResponse({'code': 0, 'data': None})
+    else:
+        return JsonResponse({'code': 1000, 'data': '验证码发送失败'})
 
 
 def submit_vcode(request):
