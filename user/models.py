@@ -26,18 +26,6 @@ class User(models.Model):
     avatar = models.CharField(verbose_name='个人形象', max_length=255)
     location = models.CharField(verbose_name='常居地', max_length=25, choices=LOCATIONS, default='上海')
 
-    def to_dict(self):
-        # 很low，很多地方用到会封装一下
-        return {
-            'id': self.id,
-            'phonenum': self.phonenum,
-            'nickname': self.nickname,
-            'gender': self.gender,
-            'birthday': str(self.birthday),  # DateField需要转义
-            'avatar': self.avatar,
-            'location': self.location,
-        }
-
     @property
     # 建立与profile的一对一关系
     def profile(self):
@@ -56,6 +44,18 @@ class User(models.Model):
             delattr(obj,name)       删除属性值
             hasattr(obj,name)       判断有没有该属性值
     '''
+
+    def to_dict(self):
+        # 很low，很多地方用到会封装一下
+        return {
+            'id': self.id,
+            'phonenum': self.phonenum,
+            'nickname': self.nickname,
+            'gender': self.gender,
+            'birthday': str(self.birthday),  # DateField需要转义
+            'avatar': self.avatar,
+            'location': self.location,
+        }
 
 
 class Profile(models.Model):
@@ -83,7 +83,7 @@ class Profile(models.Model):
             'max_distance': self.max_distance,
             'min_dating_age': self.min_dating_age,
             'max_dating_age': self.max_dating_age,
-            'vibration':self.vibration,
-            'only_matched':self.only_matched,
-            'auto_play':self.auto_play,
+            'vibration': self.vibration,
+            'only_matched': self.only_matched,
+            'auto_play': self.auto_play,
         }
