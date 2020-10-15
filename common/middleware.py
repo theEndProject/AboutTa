@@ -7,6 +7,7 @@ class AuthMiddleware(MiddlewareMixin):
 
     # 添加路径白名单，要注意路径前面要加/
     white_list = [
+        '/',
         '/api/user/vcode/fetch',
         '/api/user/vcode/submit',
         '/qiniu/callback',

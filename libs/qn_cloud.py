@@ -15,7 +15,7 @@ def gen_token(uid, filename):
     policy = {
         'scope': cfg.QN_BUCKET,  # 指定上传的目标资源空间 Bucket
         'deadline': int(time.time() + 600),  # 上传凭证有效截止时间
-        'returnBody': json.dumps({'code': 0, 'data': get_res_url}),  # 返回值
+        'returnBody': json.dumps({'code': 0, 'data': get_res_url(filename)}),  # 返回值
         'callbackUrl': cfg.QN_CALLBACK_URL,  # 上传成功后，七牛云向业务服务器发送 POST 请求的 URL。
         'callbackHost': cfg.QN_CALLBACK_DOMAIN,  # 上传成功后，七牛云向业务服务器发送回调通知时的 Host 值。
         # 上传成功后，七牛云向业务服务器发送 Content-Type: application/x-www-form-urlencoded 的 POST 请求。
