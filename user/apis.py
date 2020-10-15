@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.core.cache import cache
 from user.logics import send_vcode
-from user.models import User
+from user.models import User, Profile
 
 
 # Create your views here.
@@ -71,7 +71,9 @@ def submit_vcode(request):
 
 def show_profile(request):
     '''查看个人资料'''
-    return JsonResponse()
+    uid = request.session['uid']
+    profile, _ = Profile.objects.get_or_create(id=uid)
+    return JsonResponse({'code': 0, 'data': Profile.to_dict()})
 
 
 def update_profile(request):

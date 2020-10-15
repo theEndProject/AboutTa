@@ -72,3 +72,18 @@ class Profile(models.Model):
     vibration = models.BooleanField(verbose_name='开启震动', default=True)
     only_matched = models.BooleanField(verbose_name='不让陌生人看我的相册', default=True)
     auto_play = models.BooleanField(verbose_name='自动播放视频', default=True)
+
+    def to_dict(self):
+        # 很low，很多地方用到会封装一下
+        return {
+            'id': self.id,
+            'dating_location': self.dating_location,
+            'dating_gender': self.dating_gender,
+            'min_distance': self.min_distance,
+            'max_distance': self.max_distance,
+            'min_dating_age': self.min_dating_age,
+            'max_dating_age': self.max_dating_age,
+            'vibration':self.vibration,
+            'only_matched':self.only_matched,
+            'auto_play':self.auto_play,
+        }
