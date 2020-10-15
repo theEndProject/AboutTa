@@ -1,5 +1,7 @@
 from django.http import JsonResponse
 from django.core.cache import cache
+
+from libs.qn_cloud import get_res_url, gen_token
 from user.logics import send_vcode
 from user.models import User, Profile
 from user.forms import UserForm, ProfileForm
@@ -96,8 +98,8 @@ def update_profile(request):
 
     # 利用forms代替上面的一堆字段
     # 定义form对象
-    user_from = UserForm(request.POST)
-    profile_from = ProfileForm(request.POST)
+    user_from = UserForm(request.POST)  # 获取自定义UserForm需要的字典
+    profile_from = ProfileForm(request.POST)  # 获取自定义ProfileForm需要的字典
 
     '''
     POSTMAN测试写错数据的报错情况
@@ -116,13 +118,14 @@ def update_profile(request):
     '''
 
     # 检查验证数据
-    if user_from.is_valid() and profile_from.is_valid():
+    if user_from.is_valid() and profile_from.is_valid():  # is_valid()检验数据结果是否匹配
         uid = request.session['uid']
         # user = User.objects.get(id=uid) 下面的filter已经在取了，这行没有意义了。
 
         # 对应的SQL语句：update user set ... where id=uid
-        User.objects.filter(id=uid).update(**user_from.cleaned_data)
-        Profile.objects.update_or_create(id=uid, defaults=profile_from.cleaned_data) # defaults接收的就是一个字典类型的值
+        # 125和126行一样的意思，不一样的写法
+        User.objects.filter(id=uid).update(**user_from.cleaned_data)  # 根据id把更改或上传的user信息传进去
+        Profile.objects.update_or_create(id=uid, defaults=profile_from.cleaned_data)  # defaults接收的就是一个字典类型的值
         return JsonResponse({'code': 0, 'data': None})
     else:
         err = {}
@@ -133,9 +136,24 @@ def update_profile(request):
 
 def qn_token(request):
     '''获取七牛云的token'''
-    return JsonResponse()
+    uid = request.session['uid']
+    filename = f'Avatar-{uid}'  # 给图片id添加独特的名字，防止冲突
+    token = gen_token(uid, filename)
+    return JsonResponse(
+        {
+            'code': 0,
+            'data': {
+                'token': token,
+                'key': filename,
+            }
+        }
+    )
 
 
 def qn_callback(request):
     '''七牛云回调接口'''
-    return JsonResponse()
+    uid = request.POST.get('uid')
+    key = request.POST.get('key')
+    avatar_url = get_res_url(key)
+    User.objects.filter(id=uid).update(avatar=avatar_url)
+    return JsonResponse({'code': 0, 'data': avatar_url})
