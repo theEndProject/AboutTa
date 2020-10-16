@@ -3,6 +3,7 @@ import random
 
 from django.core.cache import cache  # django自带的这个缓存是利用了当前的内存
 from libs.sms import send_sms
+from common import keys
 
 '''
 命名规范
@@ -31,7 +32,7 @@ def send_vcode(phonenum):
     if not is_phonenum(phonenum):
         return False
 
-    key = 'Vcode-%s' % phonenum  # 'Vcode-%s'这是在一个字段前加特征的写法，防止与其他相同字段发生冲突
+    key = keys.VCODE_K % phonenum  # 'Vcode-%s'这是在一个字段前加特征的写法，防止与其他相同字段发生冲突
 
     # 检查缓存中是否已有验证码，防止用户频繁调用接口
     if cache.get(key):

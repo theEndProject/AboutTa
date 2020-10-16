@@ -1,10 +1,11 @@
-from django.http import JsonResponse
+from libs.http import render_json
 from django.core.cache import cache
 
 from libs.qn_cloud import get_res_url, gen_token
 from user.logics import send_vcode
 from user.models import User, Profile
 from user.forms import UserForm, ProfileForm
+from common import errors, keys
 
 
 # Create your views here.
@@ -13,9 +14,9 @@ def fetch_vcode(request):
     '''给用户发送验证码'''
     phonenum = request.GET.get('phonenum')
     if send_vcode(phonenum):
-        return JsonResponse({'code': 0, 'data': None})
+        return render_json()
     else:
-        return JsonResponse({'code': 1000, 'data': '验证码发送失败'})
+        return render_json(code=errors.VCODE_FAILD, data='验证码发送失败')
 
 
 '''
@@ -35,7 +36,7 @@ def submit_vcode(request):
     phonenum = request.POST.get('phonenum')
     vcode = request.POST.get('vcode')
 
-    key = 'Vcode-%s' % phonenum
+    key = keys.VCODE_K % phonenum
     cached_vcode = cache.get(key)
 
     # 如果在用户提交的时候没有上传vcode验证码，vcode就会是None值
@@ -58,7 +59,7 @@ def submit_vcode(request):
         '''
         # 在Session中记录用户登录的状态
         request.session['uid'] = user.id
-        return JsonResponse({'code': 0, 'data': user.to_dict()})
+        return render_json(data=user.to_dict())
         '''
         类字典对象： ----> 顾名思义,类似字典的对象
             |     django     |     flask    |
@@ -69,14 +70,14 @@ def submit_vcode(request):
             | request.META   |              |
         '''
     else:
-        return JsonResponse({'code': 1001, 'data': '验证码错误'})
+        return render_json(code=errors.VCODE_ERR, data='验证码错误')
 
 
 def show_profile(request):
     '''查看个人资料'''
     uid = request.session['uid']
     profile, _ = Profile.objects.get_or_create(id=uid)
-    return JsonResponse({'code': 0, 'data': profile.to_dict()})
+    return render_json(data=profile.to_dict())
 
 
 def update_profile(request):
@@ -126,12 +127,12 @@ def update_profile(request):
         # 125和126行一样的意思，不一样的写法
         User.objects.filter(id=uid).update(**user_from.cleaned_data)  # 根据id把更改或上传的user信息传进去
         Profile.objects.update_or_create(id=uid, defaults=profile_from.cleaned_data)  # defaults接收的就是一个字典类型的值
-        return JsonResponse({'code': 0, 'data': None})
+        return render_json()
     else:
         err = {}
         err.update(user_from.errors)
         err.update(profile_from.errors)
-        return JsonResponse({'code': 1003, 'data': err})
+        return render_json(code=errors.PROFILE_ERR, data=err)
 
 
 def qn_token(request):
@@ -139,15 +140,7 @@ def qn_token(request):
     uid = request.session['uid']
     filename = f'Avatar-{uid}'  # 给图片id添加独特的名字，防止冲突
     token = gen_token(uid, filename)
-    return JsonResponse(
-        {
-            'code': 0,
-            'data': {
-                'token': token,
-                'key': filename,
-            }
-        }
-    )
+    return render_json(data={'token': token, 'key': filename, })
 
 
 def qn_callback(request):
@@ -156,4 +149,4 @@ def qn_callback(request):
     key = request.POST.get('key')
     avatar_url = get_res_url(key)
     User.objects.filter(id=uid).update(avatar=avatar_url)
-    return JsonResponse({'code': 0, 'data': avatar_url})
+    return render_json(data=avatar_url)
