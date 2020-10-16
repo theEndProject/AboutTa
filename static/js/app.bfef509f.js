@@ -230,7 +230,7 @@
                         width: "200px",
                         src: a("4ffd")
                     }
-                }), s("h1", [t._v("Swiper")])])
+                }), s("h1", [t._v("aboutTa")])])
             }], E = a("b1d0"), $ = {
                 name: "Login", props: ["self"], data: function () {
                     return {phonenum: "", vcode: "", seen: !1, btn_text: "发送验证码"}
