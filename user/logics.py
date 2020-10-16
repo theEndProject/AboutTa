@@ -1,9 +1,10 @@
 import re
 import random
 
-from django.core.cache import cache  # django自带的这个缓存是利用了当前的内存
+# from django.core.cache import cache  # django自带的这个缓存是利用了当前的内存
 from libs.sms import send_sms
 from common import keys
+from libs.cache import rds
 
 '''
 命名规范
@@ -35,7 +36,7 @@ def send_vcode(phonenum):
     key = keys.VCODE_K % phonenum  # 'Vcode-%s'这是在一个字段前加特征的写法，防止与其他相同字段发生冲突
 
     # 检查缓存中是否已有验证码，防止用户频繁调用接口
-    if cache.get(key):
+    if rds.get(key):
         return True
 
     # 产生验证码
@@ -47,7 +48,7 @@ def send_vcode(phonenum):
 
     # 缓存保存验证码时间
     # 虽然说给不到10分钟，但是给10分钟，是为了防止客户网络不好，给客户良好的用户体验
-    cache.set(key, vcode, 600)  # 设置了10分钟
+    rds.set(key, vcode, 600)  # 设置了10分钟
 
     # 向用户手机发送验证码
     return send_sms(phonenum, vcode)

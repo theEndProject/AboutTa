@@ -1,6 +1,6 @@
 from libs.http import render_json
-from django.core.cache import cache
-
+# from django.core.cache import cache
+from libs.cache import rds
 from libs.qn_cloud import get_res_url, gen_token
 from user.logics import send_vcode
 from user.models import User, Profile
@@ -37,7 +37,7 @@ def submit_vcode(request):
     vcode = request.POST.get('vcode')
 
     key = keys.VCODE_K % phonenum
-    cached_vcode = cache.get(key)
+    cached_vcode = rds.get(key)
 
     # 如果在用户提交的时候没有上传vcode验证码，vcode就会是None值
     # 如果cached_vcode的验证码过期了，cached_vcode也会成为None值
