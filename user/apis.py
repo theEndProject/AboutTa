@@ -15,7 +15,7 @@ def fetch_vcode(request):
     phonenum = request.GET.get('phonenum')
 
     result = send_vcode.delay(phonenum)  # 异步发送短信验证码
-    return render_json()
+    return result
     # 如果报错可以用Flower-Celery监控
 
 
