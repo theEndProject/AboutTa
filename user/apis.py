@@ -13,10 +13,10 @@ from common import errors, keys
 def fetch_vcode(request):
     '''给用户发送验证码'''
     phonenum = request.GET.get('phonenum')
-    if send_vcode(phonenum):
-        return render_json()
-    else:
-        return render_json(code=errors.VCODE_FAILD, data='验证码发送失败')
+
+    result = send_vcode.delay(phonenum)  # 异步发送短信验证码
+    return render_json()
+    # 如果报错可以用Flower-Celery监控
 
 
 '''

@@ -5,6 +5,7 @@ import random
 from libs.sms import send_sms
 from common import keys
 from libs.cache import rds
+from tasks import celery_app
 
 '''
 命名规范
@@ -27,6 +28,7 @@ def random_code(length=6):
     return ''.join(nums)
 
 
+@celery_app.task()  # 装饰一下send_vcode
 def send_vcode(phonenum):
     '''给用户发送短信验证码'''
     # 第一步验证手机号，不然往下走没意义
