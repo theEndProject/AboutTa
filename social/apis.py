@@ -1,9 +1,12 @@
 from libs.http import render_json
+from social import logics
 
 
 def rcmd_users(request):
     '''获取推荐用户'''
-    return render_json()
+    users = logics.rcmd(request.uid)  # 获取推荐用户的id
+    users_data = [users.to_dict() for user in users]  # 遍历推荐用户的信息列表
+    return render_json(users_data)
 
 
 def like(request):

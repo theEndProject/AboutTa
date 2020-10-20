@@ -2,7 +2,15 @@ import os
 
 from celery import Celery
 from tasks import config
-
+'''
+    Celery 的使用场景
+        发短信
+        发送邮件
+        定时任务
+        图片的压缩
+        视频处理
+        复杂算法处理
+'''
 # 因为发短信太慢，所以用异步Celery
 
 # 要加载django首先要加载django的settings
