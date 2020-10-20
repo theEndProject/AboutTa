@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'user',
+    'social',
 ]
 '''
     django 中间件: ----->  函数一定要带动词
