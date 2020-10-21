@@ -1,5 +1,6 @@
 import datetime
 
+from social.models import Slider, Friend
 from user.models import User, Profile
 
 
@@ -47,3 +48,17 @@ def rcmd(uid):
     # TODO:排除已经滑过的人(TODO:的意思是待完成)
 
     return users
+
+
+def like_someone(uid, sid):
+    '''喜欢（右滑）'''
+    # 添加滑动记录
+    Slider.objects.create(uid=uid, sid=sid, stype='like')
+    # 检查对方是否喜欢（右滑或上滑）过自己
+    is_liked = Slider.objects.filter(uid=sid, sid=uid, stype__in=['like', 'superlike']).exists()  # .exists()判断是否存在
+    if is_liked:
+        # 将互相喜欢的两人添加好友
+        Friend.make_friends(uid, sid)
+        return True
+    else:
+        return False

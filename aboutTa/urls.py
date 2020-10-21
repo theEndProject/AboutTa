@@ -35,7 +35,6 @@ urlpatterns = [
     path('api/social/rcmd', social_api.rcmd_users),
     path('api/social/like', social_api.like),
     path('api/social/superlike', social_api.superlike),
-    path('api/social/dislike', social_api),
     path('api/social/dislike', social_api.dislike),
     path('api/social/rewind', social_api.rewind),
     path('api/social/show_fans', social_api.show_fans),
