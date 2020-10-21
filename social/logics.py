@@ -15,10 +15,15 @@ def rcmd(uid):
             datetime.time 时分秒 
             datetime.timedelta 时间差值 （datetime.datetime和datetime.date支持运算，datetime.time不支持运算）
     '''
+    # 计算出生日期范围
     today = datetime.date.today()
 
     earliest_list = today - datetime.timedelta(profile.max_dating_age * 365)  # 最早出生的日期
     latest_birth = today - datetime.timedelta(profile.min_dating_age * 365)  # 最晚出生的日期
+
+    # 获取已经划过的用户的 ID
+    # 对应的SQL语句 ---> select sid from Slider where uid=1001
+    sid_list = Slider.objects.filter(uid=uid).values_list('sid', flat=True)  # values_list拿去需要的字段，flat将列表套元组，处理成列表
     '''
         客户段获取用户定位的方式
             GPS
@@ -28,14 +33,15 @@ def rcmd(uid):
         客户端可以获取到用户的经纬度
             经度范围：-180 ~ 180
             纬度范围: -90 ~ 90
-        模糊位置处理算法：GeoHash
-        
+        模糊位置处理算法：GeoHash    
     '''
     users = User.objects.filter(
         location=profile.dating_location,
-        gender=profile.fdating_gender,
+        gender=profile.dating_gender,
         birthday__range=[earliest_list, latest_birth]  # 年龄范围
-    )[:20]  # django限制 (懒加载 ---> 用到它的时候再加载)
+    ).exclude(id__in=sid_list)[:20]
+    # exclude ---> 排除
+    # django限制 (懒加载 ---> 用到它的时候再加载)
 
     # SQL限制
     '''

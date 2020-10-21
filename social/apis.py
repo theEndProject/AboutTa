@@ -5,7 +5,7 @@ from social import logics
 def rcmd_users(request):
     '''获取推荐用户'''
     users = logics.rcmd(request.uid)  # 获取推荐用户的id
-    users_data = [users.to_dict() for user in users]  # 遍历推荐用户的信息列表
+    users_data = [user.to_dict() for user in users]  # 遍历推荐用户的信息列表
     return render_json(users_data)
 
 
@@ -13,7 +13,7 @@ def like(request):
     '''喜欢（右滑）'''
     sid = int(request.POST.get('sid'))
     matched = logics.like_someone(request.uid, sid)
-    return render_json({'is_matched': matched})
+    return render_json(data={'is_matched': matched})
 
 
 def superlike(request):
