@@ -33,6 +33,17 @@ class Slider(models.Model):
     class Meta:
         unique_together = ['uid', 'sid']
 
+    @classmethod
+    def is_like(cls, uid, sid):
+        '''检查是否喜欢过某人'''
+        slider = Slider.objects.filter(uid=uid, sid=sid).first()
+        if not slider:
+            return None  # uid用户尚未滑倒 sid
+        elif slider.stype in ['like', 'superlike']:
+            return True  # 喜欢过
+        else:
+            return False  # 不喜欢
+
 
 '''
     MySQL数据库清空表数据

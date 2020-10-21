@@ -1,7 +1,9 @@
 import datetime
 
+from libs.cache import rds
 from social.models import Slider, Friend
 from user.models import User, Profile
+from common import keys
 
 
 def rcmd(uid):
@@ -61,10 +63,28 @@ def like_someone(uid, sid):
     # 添加滑动记录
     Slider.objects.create(uid=uid, sid=sid, stype='like')
     # 检查对方是否喜欢（右滑或上滑）过自己
-    is_liked = Slider.objects.filter(uid=sid, sid=uid, stype__in=['like', 'superlike']).exists()  # .exists()判断是否存在
-    if is_liked:
+    if Slider.is_like(sid, uid):
         # 将互相喜欢的两人添加好友
         Friend.make_friends(uid, sid)
         return True
     else:
         return False
+
+
+def superlike_someone(uid, sid):
+    '''超级喜欢（上滑）'''
+    # 添加滑动记录
+    Slider.objects.create(uid=uid, sid=sid, stype='superlike')
+    # 检查对方是否喜欢（右滑或上滑）过自己
+    liked = Slider.is_like(sid, uid)
+    if liked is True:
+        # 将互相喜欢的两人添加好友
+        Friend.make_friends(uid, sid)
+        return True
+    elif liked is False:
+        return False
+    else:
+        # 因为是临时存储，所以用redis做
+
+        # 对方尚未滑倒过自己，将自己优先推荐给对方
+        rds.rpush(keys.FIRST_RCMD_Q % sid, uid)
