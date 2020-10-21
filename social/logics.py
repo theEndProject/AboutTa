@@ -6,8 +6,18 @@ from user.models import User, Profile
 from common import keys
 
 
-def rcmd(uid):
-    '''推荐滑动对象'''
+def rcmd_from_queue(uid):
+    '''优先从喜欢我的人队列里面进行推荐'''
+    uid_list = rds.lrange(keys.FIRST_RCMD_Q % uid, 0, 19)
+    # 从优先推荐队列取出uid列表
+    # lrange是redis的获取数据
+    # 左避右避
+    uid_list = [int(uid) for uid in uid_list]  # 将二进制uid强转成int类型
+    return User.objects.filter(id__in=uid_list)
+
+
+def rcmd_from_db(uid, num=20):
+    '''从数据库中推荐用户'''
     profile = Profile.objects.get(id=uid)
 
     '''
@@ -41,7 +51,7 @@ def rcmd(uid):
         location=profile.dating_location,
         gender=profile.dating_gender,
         birthday__range=[earliest_list, latest_birth]  # 年龄范围
-    ).exclude(id__in=sid_list)[:20]
+    ).exclude(id__in=sid_list)[:num]
     # exclude ---> 排除
     # django限制 (懒加载 ---> 用到它的时候再加载)
 
@@ -58,10 +68,38 @@ def rcmd(uid):
     return users
 
 
+def rcmd(uid):
+    '''推荐滑动用户'''
+    first_users = rcmd_from_queue(uid)  # 获取第一批数据来自喜欢我的人队列
+    remain = 20 - len(first_users)  # 计算需要从数据库获取的个数
+    if remain:
+        second_users = rcmd_from_db(uid, remain)  # 这里的remain就是rcmd_from_db方法的num
+        '''
+            set数组
+                &交集 |并集 -差集 ^交集的补集
+        '''
+        # first_users和second_users都是Queryset
+        return set(first_users) | set(second_users)  # 数组 ---> 顺序是不确定的
+    else:
+        return first_users
+
+    '''
+        redis的删除
+            lpop(name)只能弹出最左边和最右边，但是set元组打乱了id的位置，所以不能用
+            lrem(name,count,value)可以刚好的选择性的删除，并且有没有的情况下删除不会不错
+                count>0 从头到尾删除 count<0 从尾到头删除 count=0删除所有等于value的值
+                value是要删除的值
+    '''
+
+
 def like_someone(uid, sid):
     '''喜欢（右滑）'''
     # 添加滑动记录
     Slider.objects.create(uid=uid, sid=sid, stype='like')
+
+    # 删除优先从喜欢我的人队列里面的推荐 sid
+    rds.lrem(keys.FIRST_RCMD_Q % uid, count=0, value=sid)
+
     # 检查对方是否喜欢（右滑或上滑）过自己
     if Slider.is_like(sid, uid):
         # 将互相喜欢的两人添加好友
@@ -75,6 +113,10 @@ def superlike_someone(uid, sid):
     '''超级喜欢（上滑）'''
     # 添加滑动记录
     Slider.objects.create(uid=uid, sid=sid, stype='superlike')
+
+    # 删除优先从喜欢我的人队列里面的推荐 sid
+    rds.lrem(keys.FIRST_RCMD_Q % uid, count=0, value=sid)
+
     # 检查对方是否喜欢（右滑或上滑）过自己
     liked = Slider.is_like(sid, uid)
     if liked is True:
@@ -88,3 +130,13 @@ def superlike_someone(uid, sid):
 
         # 对方尚未滑倒过自己，将自己优先推荐给对方
         rds.rpush(keys.FIRST_RCMD_Q % sid, uid)
+        return False
+
+
+def dislike_someone(uid, sid):
+    '''不喜欢（左滑）'''
+    # 添加滑动记录
+    Slider.objects.create(uid=uid, sid=sid, stype='dislike')
+
+    # 删除优先从喜欢我的人队列里面的推荐 sid
+    rds.lrem(keys.FIRST_RCMD_Q % uid, count=0, value=sid)
