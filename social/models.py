@@ -1,4 +1,7 @@
 from django.db import models
+from django.db import IntegrityError
+
+from common import errors
 
 '''
     MySQL中的联合约束
@@ -32,6 +35,13 @@ class Slider(models.Model):
 
     class Meta:
         unique_together = ['uid', 'sid']
+
+    @classmethod
+    def slide(cls, uid, sid, stype):
+        try:
+            cls.objects.create(uid=uid, sid=sid, stype=stype)
+        except IntegrityError:  # 抓取重复滑动
+            raise errors.RepeatSliderErr  # 抛出重复滑动异常
 
     @classmethod
     def is_like(cls, uid, sid):

@@ -95,7 +95,7 @@ def rcmd(uid):
 def like_someone(uid, sid):
     '''喜欢（右滑）'''
     # 添加滑动记录
-    Slider.objects.create(uid=uid, sid=sid, stype='like')
+    Slider.slide(uid, sid, 'like')
 
     # 删除优先从喜欢我的人队列里面的推荐 sid
     rds.lrem(keys.FIRST_RCMD_Q % uid, count=0, value=sid)
@@ -112,7 +112,7 @@ def like_someone(uid, sid):
 def superlike_someone(uid, sid):
     '''超级喜欢（上滑）'''
     # 添加滑动记录
-    Slider.objects.create(uid=uid, sid=sid, stype='superlike')
+    Slider.slide(uid, sid, 'superlike')
 
     # 删除优先从喜欢我的人队列里面的推荐 sid
     rds.lrem(keys.FIRST_RCMD_Q % uid, count=0, value=sid)
@@ -136,7 +136,7 @@ def superlike_someone(uid, sid):
 def dislike_someone(uid, sid):
     '''不喜欢（左滑）'''
     # 添加滑动记录
-    Slider.objects.create(uid=uid, sid=sid, stype='dislike')
+    Slider.slide(uid, sid, 'dislike')
 
     # 删除优先从喜欢我的人队列里面的推荐 sid
     rds.lrem(keys.FIRST_RCMD_Q % uid, count=0, value=sid)

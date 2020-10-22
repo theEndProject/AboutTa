@@ -14,8 +14,8 @@ def fetch_vcode(request):
     '''给用户发送验证码'''
     phonenum = request.GET.get('phonenum')
 
-    result = send_vcode.delay(phonenum)  # 异步发送短信验证码
-    return result
+    send_vcode.delay(phonenum)  # 异步发送短信验证码
+    return render_json()
     # 如果报错可以用Flower-Celery监控
 
 
@@ -59,7 +59,7 @@ def submit_vcode(request):
         '''
         # 在Session中记录用户登录的状态
         request.session['uid'] = user.id
-        return render_json(data=user.to_dict())
+        return render_json(user.to_dict())
         '''
         类字典对象： ----> 顾名思义,类似字典的对象
             |     django     |     flask    |
@@ -70,7 +70,8 @@ def submit_vcode(request):
             | request.META   |              |
         '''
     else:
-        return render_json(code=errors.VCODE_ERR, data='验证码错误')
+        # return render_json(code=errors.VCODE_ERR, data='验证码错误')
+        raise errors.VcodeErr(data='验证码错误')
 
 
 def show_profile(request):
@@ -132,7 +133,8 @@ def update_profile(request):
         err = {}
         err.update(user_from.errors)
         err.update(profile_from.errors)
-        return render_json(code=errors.PROFILE_ERR, data=err)
+        # return render_json(code=errors.PROFILE_ERR, data=err)
+        raise errors.ProfileErr(data=err)
 
 
 def qn_token(request):

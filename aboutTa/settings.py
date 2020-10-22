@@ -139,7 +139,8 @@ MIDDLEWARE = [
     # 'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'common.middleware.AuthMiddleware'  # 登录验证中间件
+    'common.middleware.AuthMiddleware',  # 登录验证中间件
+    'common.middleware.LogicErrMiddleware',  # 逻辑异常中间件
 ]
 
 ROOT_URLCONF = 'aboutTa.urls'
