@@ -1,9 +1,38 @@
 import datetime
 
+from aboutTa import config
 from libs.cache import rds
 from social.models import Slider, Friend
 from user.models import User, Profile
-from common import keys
+from common import keys, errors
+
+from django.db.transaction import atomic  # 本身是装饰器，是程序员自控的事务
+
+'''
+    不管是在滑动喜欢还是反悔之类的都是关联性的逻辑
+    如果在中途发生异常情况，上面的操作判断成功了，下面的操作判断失败了，就会造成一个bug
+    这种情况下需要 -----+                  begin; 开始
+                     ↓                  select.....
+                    事务 ---- SQL中的事务  update.....
+                                 |       delete.....
+                                 ↓       commit; 提交
+                      隔离性,原子性，一致性，持久性            
+    +------------------+     ↓
+    ↓              要么全部完成，要么全部不完成
+数据库允许多个并发事
+务同时对其数据进行读
+写和修改的能力，隔离性
+可以防止多个事务并发执
+行时由于交叉执行而导致
+数据的不一致。  
+'''
+'''
+    django里面是自带自动提交事务的 ---> AUTOCOMMIT
+    ATOMIC_REQUESTS ---> 原子性请求 ---> 会把一整个请求包在一起
+                                                ↓
+                                    优点：简单，操作起来最方便，提交，回滚都不需要程序员操作
+                                    缺点：并不是所有函数都需要事务，浪费储存空间，降低性能
+'''
 
 
 def rcmd_from_queue(uid):
@@ -92,6 +121,7 @@ def rcmd(uid):
     '''
 
 
+@atomic  # 包住整个函数，如果出错，代码回滚，如果无错，会提交
 def like_someone(uid, sid):
     '''喜欢（右滑）'''
     # 添加滑动记录
@@ -109,6 +139,7 @@ def like_someone(uid, sid):
         return False
 
 
+@atomic
 def superlike_someone(uid, sid):
     '''超级喜欢（上滑）'''
     # 添加滑动记录
@@ -140,3 +171,57 @@ def dislike_someone(uid, sid):
 
     # 删除优先从喜欢我的人队列里面的推荐 sid
     rds.lrem(keys.FIRST_RCMD_Q % uid, count=0, value=sid)
+
+
+def rewind_last_slide(uid):
+    '''返回上一次滑动（每天允许返回三次，返回的记录只能是五分钟以内的）'''
+    now = datetime.datetime.now()
+    # 检查今天是否已经反悔3次 ---> 适合缓存
+    rewind_key = keys.REWIND_LIMIT_K % (now.date(), uid)  # now.date() 是日期
+    rewind_limit = rds.get(rewind_key, 0)
+    '''
+        每日更新三次
+        # 错误方式
+        1.过期时间 
+        2.定时任务 ---> 人数多了，异步任务太多处理不了 
+        3.建立redis库 ---> 保存key，到时间清空，在清空的时候也会出现临界点问题
+        # 正确方式
+        将日期拼接在用户的key上面
+        
+        ※时间临界点：
+            23：59：59.123 使用了2次反悔，现在要准备用第三次
+            当用了之后时间变成 00：00：00.321了，此时变成了3
+            用户一天都不能用返回了，这就是临界点可能出现的问题
+    '''
+    if rewind_limit >= config.REWIND_LIMIT:
+        raise errors.RewindLimit
+
+    # 找当最后一次的滑动
+    # 对应的SQL语句 select * from slider where uid=1001 order by stime desc limit 1;
+    last_slide = Slider.objects.filter(uid=uid).latest('stime')  # 不分对方和方向
+    # latest() ---> 最新的（按照时间最新的），这个latest强调时间
+
+    # 检查最后一次滑动是否在5分钟以内
+    # (now - last_slide.stime)两个相减的值是datetime.timedelta(天,秒,毫秒),是一个特殊的对象
+    # (now - last_slide.stime).seconds 忽略了天和毫秒，单位是秒
+    # (now - last_slide.stime).total_seconds() 天秒毫秒全加起来，单位是秒
+    time_past = (now - last_slide.stime).total_seconds()  # 已经过去的时间
+    if time_past >= config.REWIND_TIMEOUT:
+        raise errors.RewindTimeout
+
+    with atomic():    # 将多次数据修改在事务中执行
+        # 衍生的功能 +
+        #          ↓
+        # 1.如果之前匹配成了好友，则删除好友关系
+        if last_slide.stype in ['like', 'superlike']:
+            Friend.breakoff(uid, last_slide.sid)
+
+            # 2.如果之前是超级喜欢，则找到对方的优先推荐队列把我的数据删除
+            if last_slide.stype == 'superlike':
+                rds.lrem(keys.FIRST_RCMD_Q % last_slide.sid, 0, uid)
+
+        # 3.删除最后一次的滑动
+        last_slide.delete()
+
+        # 4.今日返回次数加一，缓存过期时间一天(86400秒)，+ N秒 是为了避免时间临界点问题
+        rds.set(rewind_key, rewind_limit + 1, 86400 + 1)

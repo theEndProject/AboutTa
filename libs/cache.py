@@ -5,10 +5,13 @@ from redis import Redis as _Redis
 from aboutTa.config import REDIS
 
 
+# 封装redis
 class Redis(_Redis):
     def set(self, name, value, ex=None, px=None, nx=False, xx=False):
         '''带序列化处理的 set 方法'''
-        pickled_data = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)  # pickle.HIGHEST_PROTOCOL最高版本，防止升级需要更改代码
+        # pickle序列化
+        # pickle.HIGHEST_PROTOCOL最高版本，防止升级需要更改代码
+        pickled_data = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
         # ex:expire 过期秒数
         # px:过期毫秒
         # nx:redis是否是覆盖式

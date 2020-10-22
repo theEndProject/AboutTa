@@ -97,3 +97,9 @@ class Friend(models.Model):
         '''
         uid1, uid2 = (uid2, uid1) if uid1 > uid2 else (uid1, uid2)  # 三元表达式，调整两者位置
         return cls.objects.create(uid1=uid1, uid2=uid2)
+
+    @classmethod
+    def breakoff(cls, uid1, uid2):
+        '''删除好友关系'''
+        uid1, uid2 = (uid2, uid1) if uid1 > uid2 else (uid1, uid2)  # 三元表达式，调整两者位置
+        cls.objects.filter(uid1=uid1, uid2=uid2).delete()  # 找没找到，删除都不会报错

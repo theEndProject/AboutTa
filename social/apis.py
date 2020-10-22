@@ -32,6 +32,14 @@ def dislike(request):
 
 def rewind(request):
     '''反悔'''
+    # 服务器在进行接口设计的时候，本着一个参数返回值越少越好
+    '''
+        接口设计的一些原则
+            1.接口的参数越少越好
+            2.客户端传来的所有参数，服务器都需要验证
+            3.服务器的返回值越少越好
+    '''
+    logics.rewind_last_slide(request.uid)
     return render_json()
 
 

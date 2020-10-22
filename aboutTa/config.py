@@ -21,3 +21,7 @@ QN_ACCESS_KEY = 'fjHLAR9HiC1v6L8wnqI-XqgMT5cmYI7HCaCMlaRk'
 QN_SECRET_KEY = 'c82ZiHShzQL-iafIjvZgHVEsBFS6dElOwpCuDXlq'
 QN_CALLBACK_URL = 'http://118.190.3.97:2800/qiniu/callback'
 QN_CALLBACK_DOMAIN = '118.190.3.97:2800'
+
+# social/logics反悔功能的配置
+REWIND_LIMIT = 3  # 每日反悔3次
+REWIND_TIMEOUT = 300  # 距离上一次滑动5分钟
