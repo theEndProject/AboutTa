@@ -130,6 +130,8 @@ def like_someone(uid, sid):
     # 删除优先从喜欢我的人队列里面的推荐 sid
     rds.lrem(keys.FIRST_RCMD_Q % uid, count=0, value=sid)
 
+    # raise ValueError 事务回滚测试
+    
     # 检查对方是否喜欢（右滑或上滑）过自己
     if Slider.is_like(sid, uid):
         # 将互相喜欢的两人添加好友
