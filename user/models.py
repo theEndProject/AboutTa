@@ -26,6 +26,9 @@ class User(models.Model):
     avatar = models.CharField(verbose_name='个人形象', max_length=255)
     location = models.CharField(verbose_name='常居地', max_length=25, choices=LOCATIONS, default='上海')
 
+    vip_id = models.IntegerField(verbose_name='用户购买的VIP的ID', default=1)
+    vip_end = models.DateTimeField(default='3000-12-31', verbose_name='VIP过期时间')
+
     @property
     # 建立与profile的一对一关系
     def profile(self):

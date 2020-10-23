@@ -38,6 +38,7 @@ INSTALLED_APPS = [
 
     'user',
     'social',
+    'vip',
 ]
 '''
     django 中间件: ----->  函数一定要带动词
