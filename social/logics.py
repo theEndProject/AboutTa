@@ -131,7 +131,7 @@ def like_someone(uid, sid):
     rds.lrem(keys.FIRST_RCMD_Q % uid, count=0, value=sid)
 
     # raise ValueError 事务回滚测试
-    
+
     # 检查对方是否喜欢（右滑或上滑）过自己
     if Slider.is_like(sid, uid):
         # 将互相喜欢的两人添加好友
@@ -211,7 +211,7 @@ def rewind_last_slide(uid):
     if time_past >= config.REWIND_TIMEOUT:
         raise errors.RewindTimeout
 
-    with atomic():    # 将多次数据修改在事务中执行
+    with atomic():  # 将多次数据修改在事务中执行
         # 衍生的功能 +
         #          ↓
         # 1.如果之前匹配成了好友，则删除好友关系
@@ -227,3 +227,19 @@ def rewind_last_slide(uid):
 
         # 4.今日返回次数加一，缓存过期时间一天(86400秒)，+ N秒 是为了避免时间临界点问题
         rds.set(rewind_key, rewind_limit + 1, 86400 + 1)
+
+
+def find_my_fans(uid):
+    '''查找我的粉丝'''
+    # 排除自己已经滑过的人，互相喜欢就变成好友了
+    sid_list = Slider.objects.filter(uid=uid).values_list('sid', flat=True)
+
+    # 所有喜欢和超级喜欢过我的人
+    # \ 换行
+    fans_id_list = Slider.objects.filter(sid=uid, stype__in=['like', 'superlike']) \
+        .exclude(uid__in=sid_list) \
+        .values_list('uid', flat=True)
+
+    users = User.objects.filter(id__in=fans_id_list)  # 喜欢过我的人的用户信息
+
+    return users

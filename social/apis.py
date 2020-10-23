@@ -45,9 +45,12 @@ def rewind(request):
 
 def show_fans(request):
     '''查看过喜欢我的人'''
-    return render_json()
+    fans = logics.find_my_fans(request.uid)
+    user_data = [u.to_dict() for u in fans]
+    return render_json(user_data)
 
 
 def show_friends(request):
     '''查看好友'''
     return render_json()
+
