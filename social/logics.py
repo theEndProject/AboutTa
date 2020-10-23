@@ -231,7 +231,7 @@ def rewind_last_slide(uid):
 
 def find_my_fans(uid):
     '''查找我的粉丝'''
-    # 排除自己已经滑过的人，互相喜欢就变成好友了
+    # 排除自己已经滑过的人
     sid_list = Slider.objects.filter(uid=uid).values_list('sid', flat=True)
 
     # 所有喜欢和超级喜欢过我的人

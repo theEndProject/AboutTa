@@ -1,5 +1,6 @@
 from django.db import models
 from django.db import IntegrityError
+from django.db.models import Q
 
 from common import errors
 
@@ -103,3 +104,21 @@ class Friend(models.Model):
         '''删除好友关系'''
         uid1, uid2 = (uid2, uid1) if uid1 > uid2 else (uid1, uid2)  # 三元表达式，调整两者位置
         cls.objects.filter(uid1=uid1, uid2=uid2).delete()  # 找没找到，删除都不会报错
+
+    @classmethod
+    def friend_ids(cls, uid):
+        '''查看自己的所有好友id'''
+        '''
+            Q对象 ---> 是方便django可以实现or的功能
+                如果是uid1喜欢的人，uid2就会被加入到uid1的好友列表里面
+                如果是uid2喜欢的人，uid1就会被加入到uid2的好友列表里面
+        '''
+        uid_list = []
+        condition = Q(uid1=uid) | Q(uid2=uid)  # 满足一个Q对象条件就会有值
+        for frd in cls.objects.filter(condition):
+            if frd.uid1 == uid:
+                uid_list.append(frd.uid2)
+            else:
+                uid_list.append(frd.uid1)
+
+        return uid_list

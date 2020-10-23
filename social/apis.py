@@ -1,5 +1,7 @@
 from libs.http import render_json
 from social import logics
+from user.models import User
+from social.models import Friend
 
 
 def rcmd_users(request):
@@ -46,11 +48,15 @@ def rewind(request):
 def show_fans(request):
     '''查看过喜欢我的人'''
     fans = logics.find_my_fans(request.uid)
-    user_data = [u.to_dict() for u in fans]
+    user_data = [u.to_dict() for u in fans]  # 将QuerySet通过遍历和.to_dict()方法加工成json的数据
     return render_json(user_data)
 
 
 def show_friends(request):
     '''查看好友'''
-    return render_json()
-
+    frd_list = Friend.friend_ids(request.uid)
+    friends = User.objects.filter(id__in=frd_list)
+    print(friends)
+    user_data = [u.to_dict() for u in friends]
+    print(user_data)
+    return render_json(user_data)
