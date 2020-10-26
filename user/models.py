@@ -1,7 +1,10 @@
+import datetime
+
 from django.db import models
 
-
 # Create your models here.
+from vip.models import Vip
+
 
 class User(models.Model):
     '''User模型'''
@@ -33,12 +36,23 @@ class User(models.Model):
     # 建立与profile的一对一关系
     def profile(self):
         '''当前用户对应的Profile'''
-        if not hasattr(self, '_profile'):  # 判断用户的交友资料里面是否有对应的id
+        if not hasattr(self, '_profile'):  # 判断用户的交友资料里面是否没有对应的id
             self._profile, _ = Profile.objects.get_or_create(id=self.id)
         # get_or_create获取或者创建，先获取后创建，如果获取不到就创建一下，所以都要添加一下默认值
         # get_or_create 有两个返回值
         # 单独的下划线可以占位，可以接受到后面的返回值
         return self._profile
+
+    @property
+    def vip(self):
+        '''当前用户对应的VIP'''
+        # 检查当前会员是否过期
+        now = datetime.datetime.now()
+        if now >= self.vip_end:
+            self.set_vip(1)  # 强制设置成非会员
+        if not hasattr(self, '_vip'):
+            self._vip = Vip.objects.get(id=self.vip_id)
+        return self._vip
 
     '''
         Python中的属性操作
@@ -47,6 +61,14 @@ class User(models.Model):
             delattr(obj,name)       删除属性值
             hasattr(obj,name)       判断有没有该属性值
     '''
+
+    def set_vip(self, vip_id):
+        '''设置当前用户的VIP'''
+        vip = Vip.objects.get(id=vip_id)
+        self.vip_id = vip_id
+        self.vip_end = datetime.datetime.now() + datetime.timedelta(vip.duration)  # 当前时间加上vip时间
+        self._vip = vip
+        self.save()
 
     def to_dict(self):
         # 很low，很多地方用到会封装一下

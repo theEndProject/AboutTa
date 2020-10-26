@@ -125,7 +125,6 @@ def update_profile(request):
         # user = User.objects.get(id=uid) 下面的filter已经在取了，这行没有意义了。
 
         # 对应的SQL语句：update user set ... where id=uid
-        # 125和126行一样的意思，不一样的写法
         User.objects.filter(id=uid).update(**user_from.cleaned_data)  # 根据id把更改或上传的user信息传进去
         Profile.objects.update_or_create(id=uid, defaults=profile_from.cleaned_data)  # defaults接收的就是一个字典类型的值
         return render_json()
